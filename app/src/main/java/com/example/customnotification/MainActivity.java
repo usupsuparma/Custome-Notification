@@ -4,6 +4,8 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -12,16 +14,19 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.RemoteViews;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.request.target.NotificationTarget;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int NOTIFICATION_ID = 123;
-    private NotificationTarget notificationTarget;
-    private String  url = "https://www.google.com/url?sa=i&source=images&cd=&cad=rja&uact=8&ved=2ahUKEwjztOOezODgAhUoheAKHbjdCQQQjRx6BAgBEAU&url=%2Furl%3Fsa%3Di%26source%3Dimages%26cd%3D%26ved%3D%26url%3Dhttps%253A%252F%252Fwww.marca.com%252Fen%252Ffootball%252Fbarcelona%252F2019%252F02%252F25%252F5c7450f8268e3e847e8b4644.html%26psig%3DAOvVaw19qZuE6jxLamcrJm6VQ6MZ%26ust%3D1551517770331500&psig=AOvVaw19qZuE6jxLamcrJm6VQ6MZ&ust=1551517770331500";
+    //    private NotificationTarget notificationTarget;
+    private String url = "https://www.w3.org/People/mimasa/test/imgformat/img/w3c_home.jpg";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,54 +41,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void notif(){
-// create RemoteViews
-
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel("123", "TOKEN", NotificationManager.IMPORTANCE_HIGH);
-            mNotificationManager.createNotificationChannel(channel);
-        }
-        final RemoteViews remoteViews = new RemoteViews(this.getPackageName(), R.layout.notif);
-
-        remoteViews.setImageViewResource(R.id.remoteview_notification_icon, R.mipmap.ic_launcher);
-
-        remoteViews.setTextViewText(R.id.notification_name_group, "TESt kirim");
-        remoteViews.setTextViewText(R.id.notification_group_message, "Short Messagesdfdf");
-
-        remoteViews.setTextColor(R.id.notification_name_group, getResources().getColor( android.R.color.black));
-        remoteViews.setTextColor(R.id.notification_name_group, getResources().getColor(android.R.color.black));
-
-        // build notification
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentTitle("Content Title")
-                        .setContentText("Content Text")
-                        .setContent(remoteViews)
-                        .setPriority( NotificationCompat.PRIORITY_MIN);
-
-        final Notification notification = mBuilder.build();
-
-        // set big content view for newer androids
-        notification.bigContentView = remoteViews;
-        mNotificationManager.notify(NOTIFICATION_ID, notification);
-
-        notificationTarget = new NotificationTarget(
-                this,
-                R.id.remoteview_notification_icon,
-                remoteViews,
-                notification,
-                NOTIFICATION_ID);
-
-//        Glide
-//                .with( getApplicationContext() ) // safer!
-//                .load( eatFoodyImages[3] )
-//                .asBitmap()
-//                .into( notificationTarget );
-    }
-
     private void loadImageNotification() {
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -92,36 +49,48 @@ public class MainActivity extends AppCompatActivity {
             notificationManager.createNotificationChannel(channel);
         }
 
+        ImageView iv = findViewById(R.id.remoteview_notification_icon);
         RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.notif);
         remoteViews.setImageViewResource(R.id.remoteview_notification_icon, R.drawable.ic_launcher_background);
         remoteViews.setTextViewText(R.id.notification_name_group, "Headline");
         remoteViews.setTextViewText(R.id.notification_group_contact_name, "contact Name");
         remoteViews.setTextViewText(R.id.notification_group_message, "Ini pesannya ");
+        NotificationCompat.InboxStyle notifStyle = new NotificationCompat.InboxStyle();
+        String notifTitle = "TEsting";
 
-        Notification notification = new NotificationCompat.Builder(this, "123")
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
-                .setContent(remoteViews)
-                .setCustomContentView(remoteViews).build();
+        NotificationCompat.Builder notifBuilder = new NotificationCompat.Builder(this, "123")
+                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher_background))
+                .setCustomContentView(remoteViews)
+                .setAutoCancel(true)
+                .setColor(getResources().getColor(R.color.colorAccent));
 
-        notification.bigContentView = remoteViews;
 
-        notificationTarget = new NotificationTarget(
+        NotificationTarget notificationTarget = new NotificationTarget(
                 this,
                 R.id.remoteview_notification_icon,
                 remoteViews,
-                notification,
+                notifBuilder.build(),
                 NOTIFICATION_ID);
 
         new Handler(Looper.getMainLooper()).post(() -> {
-            Glide
-                    .with(this.getApplicationContext()) // safer!
-                    .asBitmap()
-                    .load(url)
-                    .into(notificationTarget);
+           Glide
+                   .with(this)
+                   .asBitmap()
+                   .load(new GlideUrl(url))
+                   .diskCacheStrategy(DiskCacheStrategy.ALL)
+                   .into(notificationTarget);
         });
+        notificationManager.notify(NOTIFICATION_ID, notifBuilder.build());
 
-        notificationManager.notify(NOTIFICATION_ID, notification);
 
     }
+
+    public int getImage(String imageName) {
+
+        int drawableResourceId = this.getResources().getIdentifier(imageName, "drawable", this.getPackageName());
+
+        return drawableResourceId;
+    }
+
 }
